@@ -1,0 +1,16 @@
+{
+  "name": "abyndotxyz-discord-bot",
+  "version": "1.0.0",
+  "description": "A secure, Vercel-ready Discord interactions bot for abyn.xyz.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "register": "node scripts/register-commands.js",
+    "lint": "node --check api/interactions.js && node --check lib/api-client.js && node --check lib/commands.js && node --check lib/config.js && node --check lib/discord.js && node --check lib/format.js && node --check scripts/register-commands.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
