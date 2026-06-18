@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 process.env.LOCATION_SECRET = 'top-secret';
 process.env.SITE_URL = 'https://example.test';
 
-const { updateLocation } = await import('../lib/api-client.js');
+const { normalizeLocationSecret, updateLocation } = await import('../lib/api-client.js');
 
 test('updateLocation sends raw authorization matching the public API docs first', async (t) => {
   const originalFetch = globalThis.fetch;
@@ -16,7 +16,7 @@ test('updateLocation sends raw authorization matching the public API docs first'
     assert.equal(url, 'https://example.test/api/location');
     assert.equal(init.method, 'POST');
     assert.equal(init.headers.Authorization, 'top-secret');
-    assert.equal(init.headers['X-Location-Secret'], 'top-secret');
+    assert.equal(init.headers['X-Location-Secret'], undefined);
     assert.deepEqual(JSON.parse(init.body), { city: 'Paris', country: 'France' });
 
     return new Response(JSON.stringify({ location: { city: 'Paris', country: 'France' } }), {
@@ -56,4 +56,11 @@ test('updateLocation retries bearer authorization after unauthorized raw respons
 
   assert.deepEqual(authorizations, ['top-secret', 'Bearer top-secret']);
   assert.deepEqual(result, { location: { city: 'Tokyo', country: 'Japan' } });
+});
+
+
+test('normalizeLocationSecret accepts common pasted header and env formats', () => {
+  assert.equal(normalizeLocationSecret('Authorization: top-secret'), 'top-secret');
+  assert.equal(normalizeLocationSecret('LOCATION_SECRET="Bearer top-secret"'), 'top-secret');
+  assert.equal(normalizeLocationSecret("'Bearer top-secret'"), 'top-secret');
 });
