@@ -10,6 +10,10 @@ export const config = {
 };
 
 export default async function handler(request, response) {
+  if (request.method === 'GET') {
+    return send(response, { ok: true, service: 'abyn.xyz Discord bot', interactionEndpoint: true });
+  }
+
   if (request.method !== 'POST') {
     return send(response, { error: 'Method not allowed' }, 405);
   }
@@ -42,6 +46,10 @@ export default async function handler(request, response) {
 
 async function routeCommand(interaction) {
   const command = interaction.data.name;
+
+  if (command === 'ping') {
+    return { embeds: [baseEmbed('🏓 Pong', 'The abyn.xyz Discord bot is online and ready for slash commands.', COLORS.success)] };
+  }
 
   if (command === 'location') {
     return handleLocation(interaction);

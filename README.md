@@ -8,6 +8,7 @@ The main priority is safe location control: `/location set` updates `https://aby
 
 - 🔐 Discord request signature verification with your application public key.
 - 👤 Allow-list security using `ALLOWED_USER_IDS` and/or `ALLOWED_ROLE_IDS`.
+- 🏓 `/ping` smoke test for the Discord ↔ Vercel interaction path.
 - 📍 `/location view` and `/location set city country` for the site location API.
 - 🌦️ `/weather` for the weather currently displayed on the site.
 - ✨ `/site-status` for presence, visitor stats, location, and a polished embed linking to the site.
@@ -17,6 +18,7 @@ The main priority is safe location control: `/location set` updates `https://aby
 
 | Command | Who can use it? | Description |
 | --- | --- | --- |
+| `/ping` | Everyone with access to the bot | Confirms Discord can reach the Vercel interactions endpoint. |
 | `/location view` | Everyone with access to the bot | Shows the current saved city, country, timezone, and coordinates. |
 | `/location set city country` | Allowed user IDs or role IDs only | Updates the site location through `POST /api/location`. |
 | `/weather` | Everyone with access to the bot | Shows current weather from `GET /api/weather`. |
@@ -57,6 +59,22 @@ Copy `.env.example` and configure these values in Vercel Project Settings → En
    ```
 
 7. Invite the bot to your server with the `applications.commands` scope.
+8. Run `/ping` in Discord first. If it works, the Discord application, command registration, and Vercel endpoint are connected correctly.
+
+## Why you might not be able to interact with the bot
+
+This project is an interactions-only slash command bot. It does not connect to Discord Gateway, so it will not answer normal chat messages or prefix commands such as `!ping`. Use Discord slash commands instead.
+
+Common setup issues:
+
+1. **Commands were not registered.** Run `npm run register` after setting `DISCORD_APPLICATION_ID` and `DISCORD_BOT_TOKEN`. If `DISCORD_GUILD_ID` is set, commands appear almost immediately in that server; global commands can take longer to propagate.
+2. **The bot was invited without slash-command permissions.** Re-invite it with the `applications.commands` scope.
+3. **The interaction endpoint is not set.** In the Discord Developer Portal, set it to `https://your-bot.vercel.app/api/interactions`.
+4. **`DISCORD_PUBLIC_KEY` is wrong or missing in Vercel.** Discord will reject or fail interactions when signature verification cannot pass.
+5. **You are trying `/location set` without being allowed.** Add your Discord user ID to `ALLOWED_USER_IDS` or a trusted role ID to `ALLOWED_ROLE_IDS`. The bot intentionally denies location updates when no allow-list is configured.
+6. **You are testing with normal messages.** The bot only supports `/ping`, `/location`, `/weather`, and `/site-status`.
+
+Open `https://your-bot.vercel.app/api/interactions` in a browser after deploying. It should return a small JSON health response. That confirms the Vercel function exists, but Discord POST signature verification is still required for real interactions.
 
 ## Security notes
 
