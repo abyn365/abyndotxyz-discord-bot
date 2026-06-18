@@ -1,30 +1,21 @@
-import { COMMANDS } from '../lib/commands.js';
+import { DISCORD_APPLICATION_ID, DISCORD_BOT_TOKEN, DISCORD_GUILD_ID } from '../lib/config.js';
+import { inviteUrl, registerCommands } from '../lib/discord-api.js';
 
-const { DISCORD_APPLICATION_ID, DISCORD_BOT_TOKEN, DISCORD_GUILD_ID } = process.env;
+try {
+  const result = await registerCommands({
+    applicationId: DISCORD_APPLICATION_ID,
+    botToken: DISCORD_BOT_TOKEN,
+    guildId: DISCORD_GUILD_ID
+  });
 
-if (!DISCORD_APPLICATION_ID || !DISCORD_BOT_TOKEN) {
-  console.error('Missing DISCORD_APPLICATION_ID or DISCORD_BOT_TOKEN.');
+  console.log(`Registered ${result.registered} Discord slash commands (${result.scope}).`);
+  console.log(`Commands: ${result.commands.join(', ')}`);
+  console.log(`Invite URL: ${inviteUrl(DISCORD_APPLICATION_ID)}`);
+
+  if (!DISCORD_GUILD_ID) {
+    console.log('Global commands can take time to appear. Set DISCORD_GUILD_ID for near-instant server testing.');
+  }
+} catch (error) {
+  console.error('Failed to register commands:', error.status || '', error.details || error.message);
   process.exit(1);
 }
-
-const route = DISCORD_GUILD_ID
-  ? `applications/${DISCORD_APPLICATION_ID}/guilds/${DISCORD_GUILD_ID}/commands`
-  : `applications/${DISCORD_APPLICATION_ID}/commands`;
-
-const response = await fetch(`https://discord.com/api/v10/${route}`, {
-  method: 'PUT',
-  headers: {
-    Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify(COMMANDS)
-});
-
-const body = await response.json().catch(() => ({}));
-
-if (!response.ok) {
-  console.error('Failed to register commands:', response.status, body);
-  process.exit(1);
-}
-
-console.log(`Registered ${Array.isArray(body) ? body.length : COMMANDS.length} Discord slash commands.`);
