@@ -6,7 +6,7 @@ process.env.SITE_URL = 'https://example.test';
 
 const { updateLocation } = await import('../lib/api-client.js');
 
-test('updateLocation sends bearer location secret first', async (t) => {
+test('updateLocation sends raw authorization matching the public API docs first', async (t) => {
   const originalFetch = globalThis.fetch;
   t.after(() => {
     globalThis.fetch = originalFetch;
@@ -15,7 +15,7 @@ test('updateLocation sends bearer location secret first', async (t) => {
   globalThis.fetch = async (url, init) => {
     assert.equal(url, 'https://example.test/api/location');
     assert.equal(init.method, 'POST');
-    assert.equal(init.headers.Authorization, 'Bearer top-secret');
+    assert.equal(init.headers.Authorization, 'top-secret');
     assert.equal(init.headers['X-Location-Secret'], 'top-secret');
     assert.deepEqual(JSON.parse(init.body), { city: 'Paris', country: 'France' });
 
@@ -29,7 +29,7 @@ test('updateLocation sends bearer location secret first', async (t) => {
   assert.deepEqual(result, { location: { city: 'Paris', country: 'France' } });
 });
 
-test('updateLocation retries legacy raw authorization after unauthorized bearer response', async (t) => {
+test('updateLocation retries bearer authorization after unauthorized raw response', async (t) => {
   const originalFetch = globalThis.fetch;
   t.after(() => {
     globalThis.fetch = originalFetch;
@@ -54,6 +54,6 @@ test('updateLocation retries legacy raw authorization after unauthorized bearer 
 
   const result = await updateLocation('Tokyo', 'Japan');
 
-  assert.deepEqual(authorizations, ['Bearer top-secret', 'top-secret']);
+  assert.deepEqual(authorizations, ['top-secret', 'Bearer top-secret']);
   assert.deepEqual(result, { location: { city: 'Tokyo', country: 'Japan' } });
 });
