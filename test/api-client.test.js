@@ -17,6 +17,7 @@ test('updateLocation sends raw authorization matching the public API docs first'
     assert.equal(init.method, 'POST');
     assert.equal(init.headers.Authorization, 'top-secret');
     assert.equal(init.headers['X-Location-Secret'], undefined);
+    assert.equal(init.headers['Content-Type'], 'application/json');
     assert.deepEqual(JSON.parse(init.body), { city: 'Paris', country: 'France' });
 
     return new Response(JSON.stringify({ location: { city: 'Paris', country: 'France' } }), {
@@ -29,17 +30,17 @@ test('updateLocation sends raw authorization matching the public API docs first'
   assert.deepEqual(result, { location: { city: 'Paris', country: 'France' } });
 });
 
-test('updateLocation retries bearer authorization after unauthorized raw response', async (t) => {
+test('updateLocation retries alternate supported location secret header styles after unauthorized responses', async (t) => {
   const originalFetch = globalThis.fetch;
   t.after(() => {
     globalThis.fetch = originalFetch;
   });
 
-  const authorizations = [];
+  const requests = [];
   globalThis.fetch = async (url, init) => {
-    authorizations.push(init.headers.Authorization);
+    requests.push(init.headers);
 
-    if (authorizations.length === 1) {
+    if (requests.length < 4) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
@@ -54,10 +55,14 @@ test('updateLocation retries bearer authorization after unauthorized raw respons
 
   const result = await updateLocation('Tokyo', 'Japan');
 
-  assert.deepEqual(authorizations, ['top-secret', 'Bearer top-secret']);
+  assert.deepEqual(requests, [
+    { Authorization: 'top-secret', 'Content-Type': 'application/json' },
+    { Authorization: 'top-secret', 'X-Location-Secret': 'top-secret', 'Content-Type': 'application/json' },
+    { Authorization: 'Bearer top-secret', 'Content-Type': 'application/json' },
+    { Authorization: 'Bearer top-secret', 'X-Location-Secret': 'top-secret', 'Content-Type': 'application/json' }
+  ]);
   assert.deepEqual(result, { location: { city: 'Tokyo', country: 'Japan' } });
 });
-
 
 test('normalizeLocationSecret accepts common pasted header and env formats', () => {
   assert.equal(normalizeLocationSecret('Authorization: top-secret'), 'top-secret');
