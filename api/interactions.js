@@ -1,6 +1,6 @@
 import { getJson, updateLocation } from '../lib/api-client.js';
 import { DISCORD_PUBLIC_KEY, SITE_URL } from '../lib/config.js';
-import { baseEmbed, COLORS, denyEmbed, InteractionResponseType, InteractionType, isAllowed, verifyDiscordRequest } from '../lib/discord.js';
+import { baseEmbed, COLORS, denyEmbed, InteractionResponseType, InteractionType, isAllowed, siteLinkButton, verifyDiscordRequest } from '../lib/discord.js';
 import { formatDiscordStatus, formatLocation, formatWeather } from '../lib/format.js';
 
 export const config = {
@@ -73,10 +73,11 @@ async function routeCommand(interaction) {
           fields: [
             { name: 'Visitors today', value: `Active: **${visitors.active}**\nPageviews: **${visitors.pageviews}**\nUniques: **${visitors.uniques}**`, inline: true },
             { name: 'Location', value: formatLocation(location), inline: true },
-            { name: 'Website', value: `[Open ${SITE_URL}](${SITE_URL})`, inline: false }
+            { name: 'Website', value: SITE_URL, inline: false }
           ]
         }
-      ]
+      ],
+      components: [siteLinkButton(SITE_URL)]
     };
   }
 
